@@ -1,8 +1,31 @@
 #+title: Denote Cache
 
-~Denote Cache~ is an in-memory cache for denote notes' metadata. It
+~Denote Cache~ is an in-memory cache for [[https://sr.ht/~protesilaos/denote/][Denote]] notes' metadata. It
 include ~title~, ~filetype(denote specific)~, ~file extension~,
 ~last modification time~ and ~forward~ and ~back~ links.
+It also allows adding other arbitrary info regarding files to the cache.
 
-Its main use case is to display and filter all denote notes at one
-place.
+Denote provides means to manage not only text notes but any file with
+a nice naming scheme. The way I use Denote is like this:
+- use it as a filing system where I put my notes (org mode), receipts,
+  website captures, screenshots, scanned documents etc
+- notes and files are within different sub directories
+- lots of these notes and files are just for record keeping and not
+  for day-to-day reading
+- I seldom delete anything, that means my notes directory keeps on
+  growing (currently around 973 files, 2.5 GB). I don't mind the size,
+  its much less than some media files these days
+
+~Denote Cache~ is an attempt to aid in these use cases. All of what it
+does can be done using existing Emacs utilities. This is just to help
+me with my workflow.
+
+It allows me to do:
+- display all the notes at one place (using completing-read)
+- show titles from the files rather than file names
+- easily include other information like keywords, filetype etc while
+  filtering in completing-read
+- as lots of my notes/files are just for record keeping, I want them
+  to be buried down and not show at the top. I sort my completing-read
+  list of files using last modification time (it can be sorted using
+  some other arbitrary criteria also)
