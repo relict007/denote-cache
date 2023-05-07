@@ -35,7 +35,7 @@ This is my present config:
 
 #+begin_src emacs-lisp
   (use-package denote-cache
-    :straight (:host github :repo "relict007/denote-cache")
+    :straight (:host sourcehut :repo "relict007/denote-cache")
     :after (denote dired org)
     :config
     (denote-cache-autosync-mode +1)
