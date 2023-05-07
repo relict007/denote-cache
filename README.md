@@ -1,5 +1,5 @@
 ---
-title: Denote Cache
+Denote Cache
 ---
 
 `Denote Cache` is an in-memory cache for
