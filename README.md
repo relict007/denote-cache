@@ -1,0 +1,144 @@
+---
+title: Denote Cache
+---
+
+`Denote Cache` is an in-memory cache for
+[Denote](https://sr.ht/~protesilaos/denote/) notes' metadata. It include
+`title`, `filetype(denote specific)`, `file extension`,
+`last modification time` and `forward` and `back` links. It also allows
+adding other arbitrary info regarding files to the cache.
+
+Denote provides means to manage not only text notes but any file with a
+nice naming scheme. The way I use Denote is like this:
+
+- use it as a filing system where I put my notes (org mode), receipts,
+  website captures, screenshots, scanned documents etc
+- notes and files are within different sub directories
+- lots of these notes and files are just for record keeping and not for
+  day-to-day reading
+- I seldom delete anything, that means my notes directory keeps on
+  growing (currently around 973 files, 2.5 GB). I don't mind the size,
+  its much less than some media files these days
+
+`Denote Cache` is an attempt to aid in these use cases. All of what it
+does can be done using existing Emacs utilities. This is just to help me
+with my workflow.
+
+It allows me to do:
+
+- display all the notes at one place (using completing-read)
+- show titles from the files rather than file names
+- easily include other information like keywords, filetype etc while
+  filtering in completing-read
+- as lots of my notes/files are just for record keeping, I want them to
+  be buried down and not show at the top. I sort my completing-read list
+  of files using last modification time (it can be sorted using some
+  other arbitrary criteria also)
+
+This is my present config:
+
+``` commonlisp
+(use-package denote-cache
+  :straight (:host sourcehut :repo "relict007/denote-cache")
+  :after (denote dired org)
+  :config
+  (denote-cache-autosync-mode +1)
+
+  (defun rlct/denote--find-file-with-pretty-format (orginal-function &optional initial-text)
+    "Denote files but with title extracted"
+    (cdr (assoc (completing-read "Select a link to insert: "  denote-cache--sorted-files-with-titles nil t) denote-cache--sorted-files-with-titles))
+    )
+
+  (defun rlct/denote-link()
+    "replacement for denote-link which shows the file titles and tags in a nice way"
+    (interactive)
+    (let ((denote-file-prompt 'rlct/denote--find-file-with-pretty-format))
+      (advice-add 'denote-file-prompt :around denote-file-prompt)
+      )
+    (call-interactively 'denote-link)
+    (advice-remove 'denote-file-prompt 'rlct/denote--find-file-with-pretty-format)
+    )
+
+  (defun rlct/denote--propertize-title(title extension keywords)
+    (let* (
+           (keywords-as-string (format "%0s" (if keywords
+                                                 (mapconcat #'(lambda (k) (concat "#" k)) keywords " ")
+                                               "---")))
+           (extension-string (if (equal extension "org") "" (concat " #" extension "")))
+           (metainfo (concat keywords-as-string extension-string))
+           (metainfo-pretty (propertize (concat " (" metainfo ")") 'face 'org-tag))
+
+           ;; (extension-string (if (equal extension "org") "" (concat "[" extension "]")))
+           ;; (extension-part (propertize extension-string 'face 'org-tag))
+           (final-title (concat title metainfo-pretty)))
+      final-title))
+
+  (defvar denote-cache--sorted-files-with-titles nil)
+
+  (defun rlct/denote-cache--sort-files (files)
+    (cl-sort files (lambda (a b)
+                  (let* ((ftime-a (denote-cache-get-ftime a))
+                         (ftime-b (denote-cache-get-ftime b)))
+                    (time-less-p ftime-b ftime-a))))
+    )
+
+  (defun rlct/denote-cache--make-altplist (files)
+    (mapcar (lambda (f)
+              (let* (
+                     (title (denote-cache-get-title f))
+                     (keywords (denote-cache-get-keywords f))
+                     (extension (denote-cache-get-extension f))
+                     (propertized-title (rlct/denote--propertize-title title extension keywords))
+                     )
+                (cons propertized-title f)
+                )
+              ) files))
+
+  (add-hook 'denote-cache-post-cache-update-hook #'(lambda ()
+                           (message "cache updated")
+                           (setq denote-cache--sorted-files-with-titles (rlct/denote-cache--make-altplist (rlct/denote-cache--sort-files (denote-cache-get-all-files-from-cache))))))
+
+  (defun rlct/denote-all-files-cached ()
+    "All denote files from cache"
+    (interactive)
+    (find-file (rlct/alist-get-equal (completing-read "Note: " denote-cache--sorted-files-with-titles nil) denote-cache--sorted-files-with-titles)))
+
+
+  (defun rlct/denote-format-links (links)
+    "Formats the links returned by denote-cache-get-backlinks and denote-cache-get-forwardlinks"
+    (mapcar (lambda (f)
+              (let* ((keywords (denote-cache-get-keywords f))
+                     (title (denote-cache-get-title f))
+                     (extension (denote-cache-get-extension f))
+                     (formatted-title (rlct/denote--propertize-title title extension keywords)))
+                (cons formatted-title f)))
+            links))
+
+  (defun rlct/denote-backlinks ()
+    (interactive)
+    (let* ((file (buffer-file-name))
+           (links (rlct/denote-cache--sort-files (denote-cache-get-backlinks file)))
+           (links-formatted (rlct/denote-format-links links))
+           (selected-file (rlct/alist-get-equal (completing-read "Backlinks: " links-formatted nil) links-formatted)))
+      (find-file selected-file)))
+
+  (defun rlct/denote-forwardlinks ()
+    (interactive)
+    (let* ((file (buffer-file-name))
+           (links (rlct/denote-cache--sort-files (denote-cache-get-forwardlinks file)))
+           (links-formatted (rlct/denote-format-links links))
+           (selected-file (rlct/alist-get-equal (completing-read "Forward Links: " links-formatted nil) links-formatted)))
+      (find-file selected-file)))
+
+  :bind
+  (:map my-org-keys-prefix-map
+        ("nl" . 'rlct/denote-link)
+        ("nb" . 'rlct/denote-backlinks)
+        ("nf" . 'rlct/denote-forwardlinks)
+        )
+  (:map modalka-leader-map
+        ("nn" . 'rlct/denote-all-files-cached)
+        )
+
+  )
+```
