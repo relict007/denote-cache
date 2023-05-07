@@ -5,6 +5,9 @@
 
 (defvar denote-cache--cache (make-hash-table :test 'equal) "info cache")
 (defvar denote-cache--links-cache '() "links cache")
+(defvar denote-cache--performance-hack-all-files nil "temporary list of all denote files")
+(defvar denote-cache--performance-hack-all-text-files nil "temporary list of all denote text files")
+
 
 (defvar denote-cache-post-cache-update-hook nil
   "Hook for cache updates")
@@ -19,52 +22,45 @@
   (run-hooks 'denote-cache-post-cache-update-hook)
   )
 
-(defun denote-cache--retrieve-backlinks (file text-files)
+(defun denote-cache--retrieve-backlinks (file)
   "Retrieve backlinks using denote native apis. No cache"
   (setq identifier (denote-retrieve-filename-identifier file))
   (delete file (sort
-   (delete-dups
-    (mapcar #'xref-location-group
-            (mapcar #'xref-match-item-location
-                    (xref-matches-in-files identifier text-files))))
-   #'string-lessp))
-  )
+                (cl-remove-duplicates
+                 (mapcar #'xref-location-group
+                         (mapcar #'xref-match-item-location
+                                 (xref-matches-in-files identifier (denote-directory-text-only-files)))) :test 'equal)
+                #'string-lessp)))
 
 (defun denote-cache--retrieve-forwardlinks (file)
   "Retrieve forward links, no cache"
-  (let* (
-         (file-type (denote-filetype-heuristics file))
-         (regexp (denote--link-in-context-regexp file-type))
-         (files (denote-link--expand-identifiers regexp)))
-      (delete file files)
+  (setq file-type (denote-filetype-heuristics file))
+  (if (eq file-type 'org)
+      (let* (
+             (regexp (denote--link-in-context-regexp file-type))
+             (files (denote-link--expand-identifiers regexp)))
+        (delete file files)
+        )
+    '()
     )
   )
 
 (defun denote-cache--handle-file-add (file)
   "Handle event of a file being added"
-  (if (denote-cache--is-denote-file file)      
-      (progn
-        (message (concat "adding file " file))
-        (denote-cache--add-file-in-cache file)
-        (denote-cache--run-post-cache-update-hook))))
-
-;; (defun denote-cache--handle-file-update (file)
-;;   "Handle event of a file being updated"
-;;   (message (concat "handle file update " file))
-;;   (if (denote-cache--is-denote-file file)
-;;       (progn
-;;         (message (concat "actually updating file " file))
-;;         (denote-cache--update-file-in-cache file)
-;;         (denote-cache--run-post-cache-update-hook))))
+  (when (denote-cache--is-denote-file file)
+    (message (concat "adding file " file))
+    (denote-cache--add-file-in-cache file)
+    (denote-cache--run-post-cache-update-hook)
+    ))
 
 (defun denote-cache--handle-file-delete (file)
   "Handle event of a file being deleted"
   (message (concat "delete " file))
-  (if (denote-cache--is-denote-file file)
-      (progn
+  
+  (when (denote-cache--is-denote-file file)
         (message (concat "actuauly delete " file))
         (denote-cache--delete-file-from-cache file)
-        (denote-cache--run-post-cache-update-hook))))
+        (denote-cache--run-post-cache-update-hook)))
 
 (defun denote-cache--post-rename-file-hook (old-file new-file-or-dir &rest _args)
   "Hook to run after a file is renamed"
@@ -110,21 +106,22 @@
       (advice-remove #'vc-delete-file #'denote-cache--delete-file-hook)
       ))))
 
-(defun denote-cache--retrieve-info (file &optional text-files)
-  "Retrieve all the info about the file (no cache). Extra
-  text-files paramter to speed up things"
+(defun denote-cache--retrieve-info (file)
+  "Retrieve all the info about the file (no cache)"
   (let*(
         (filetype (denote-filetype-heuristics file))
         (title (if (eq filetype 'org) (or (denote-retrieve-title-value file filetype) (denote-retrieve-filename-title file)) (denote-retrieve-filename-title file)))
         (ftime (file-attribute-modification-time (file-attributes file)))
         (keywords (denote-extract-keywords-from-path file))
         (keywords-sorted (if (null keywords) keywords (denote-keywords-sort keywords)))
+        (extension (downcase (file-name-extension file)))
         (info (make-hash-table :test 'equal))
         )
     (puthash "title" title info)
     (puthash "ftime" ftime info)
     (puthash "filetype" filetype info)
     (puthash "keywords" keywords-sorted info)
+    (puthash "extension" extension info)
     info
     )   
   )
@@ -132,16 +129,12 @@
 (defun denote-cache--add-links (file)
   ;; (message (concat "adding links " file))
   ;; (message (concat "links " (prin1-to-string denote-cache--links-cache)))
-  (let* ((backlinks (denote-cache--retrieve-backlinks file (denote-directory-text-only-files)))
+  (let* ((backlinks (denote-cache--retrieve-backlinks file))
          (forwardlinks (denote-cache--retrieve-forwardlinks file)))
     (dolist (link backlinks)
-      (add-to-list 'denote-cache--links-cache (cons link file))      
-      )
+      (add-to-list 'denote-cache--links-cache (cons link file)))
     (dolist (link forwardlinks)
-      (add-to-list 'denote-cache--links-cache (cons file link))      
-      )
-    )
-  )
+      (add-to-list 'denote-cache--links-cache (cons file link)))))
 
 (defun denote-cache--delete-links (file)
   ;; (message (concat "delete links " file))
@@ -151,14 +144,14 @@
                       denote-cache--links-cache)))
 
 (defun denote-cache--update-links (file)
-  ;; (message (concat "update links " file))
+  ;; (message (concat "update links " file))  
   (denote-cache--delete-links file)
   (denote-cache--add-links file)  
   )
 
-(defun denote-cache--add-file-in-cache(file &optional text-files)
+(defun denote-cache--add-file-in-cache(file)
   "Add file in the cache while retrieving its info"
-  (puthash file (denote-cache--retrieve-info file text-files) denote-cache--cache)
+  (puthash file (denote-cache--retrieve-info file) denote-cache--cache)
   (denote-cache--add-links file)
   )
 
@@ -167,10 +160,10 @@
   (remhash file denote-cache--cache)
   (denote-cache--delete-links file))
 
-(defun denote-cache--update-file-in-cache (file &optional text-files)
+(defun denote-cache--update-file-in-cache (file)
   "Update file in cache"
   (message (concat "updated file " file))
-  (puthash file (denote-cache--retrieve-info file text-files) denote-cache--cache)
+  (puthash file (denote-cache--retrieve-info file) denote-cache--cache)
   (denote-cache--update-links file))
 
 (defun denote-cache--org-capture-after-finalize-hook ()
@@ -192,20 +185,31 @@
 (add-hook 'after-save-hook #'denote-cache--after-save-hook)
 (add-hook 'org-capture-after-finalize-hook #'denote-cache--org-capture-after-finalize-hook)
 
+(defun denote-cache--performance-all-files-wrapper ()
+  denote-cache--performance-hack-all-files
+  )
 
+(defun denote-cache--performance-all-text-files-wrapper ()
+  denote-cache--performance-hack-all-text-files
+  )
+  
 (defun denote-cache-rebuild-cache()
   "Rebuild cache"
   (interactive)
-  (setq denote-cache--cache nil)
+  (clrhash denote-cache--cache)
   (denote-cache-update-cache)
   )
 
 (defun denote-cache-update-cache()
   "Update all the cache"
   (interactive)
+  (setq denote-cache--performance-hack-all-files (denote-directory-files))
+  (setq denote-cache--performance-hack-all-text-files (denote-directory-text-only-files))
+  (advice-add #'denote-directory-files :override  #'denote-cache--performance-all-files-wrapper)
+  (advice-add #'denote-directory-text-only-files :override  #'denote-cache--performance-all-text-files-wrapper)
   (let* (
-         (text-files (denote-directory-text-only-files))
-         (files (denote-directory-files))
+         ;;(text-files (denote-directory-text-only-files))
+         (files denote-cache--performance-hack-all-files)
          (cached-files (denote-cache-get-all-files-from-cache))
          (new-files (denote-cache--utils-remove-matching-items files cached-files))
          (deleted-files (denote-cache--utils-remove-matching-items cached-files files))
@@ -218,12 +222,12 @@
                                           (equal ftime ftime-cached))) common-files)))
     (dolist (f updated-files)
       (message (concat "updated: " f))
-      (denote-cache--update-file-in-cache f text-files)
+      (denote-cache--update-file-in-cache f)
       )
 
     (dolist (f new-files)
       (message (concat "added: " f))
-      (denote-cache--add-file-in-cache f text-files)
+      (denote-cache--add-file-in-cache f)
       )
 
     (dolist (f deleted-files)
@@ -234,8 +238,11 @@
     (denote-cache--run-post-cache-update-hook)
     (message "update done")
     )
+  (advice-remove #'denote-directory-files #'denote-cache--performance-all-files-wrapper)
+  (advice-remove #'denote-directory-text-only-files #'denote-cache--performance-all-text-files-wrapper)
+  (setq denote-cache--performance-hack-all-files nil)
+  (setq denote-cache--performance-hack-all-text-files nil)
   )
-
 
 (defun denote-cache--util-common-items (list another-list)
     (cl-intersection list another-list :test #'equal))
@@ -263,6 +270,9 @@
 
 (defun denote-cache-get-keywords (file)
   (gethash "keywords" (denote-cache--get-file-info file)))
+
+(defun denote-cache-get-extension (file)
+  (gethash "extension" (denote-cache--get-file-info file)))
 
 (defun denote-cache-get-backlinks (file)
   (setq links (cl-remove-if-not (lambda (pair)
