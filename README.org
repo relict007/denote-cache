@@ -1,0 +1,8 @@
+#+title: Denote Cache
+
+~Denote Cache~ is an in-memory cache for denote notes' metadata. It
+include ~title~, ~filetype(denote specific)~, ~file extension~,
+~last modification time~ and ~forward~ and ~back~ links.
+
+Its main use case is to display and filter all denote notes at one
+place.
