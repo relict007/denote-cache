@@ -1,5 +1,6 @@
 ---
-Denote Cache
+author: relict007
+title: Denote Cache
 ---
 
 `Denote Cache` is an in-memory cache for
@@ -142,3 +143,9 @@ This is my present config:
 
   )
 ```
+
+Basically you need to run `denote-cache-update-cache` at startup to load
+the cache. Also, it might be a good idea to enable
+`denote-cache-autosync-mode` so that cache stays in sync with the actual
+files. Have a closer look at the functions which I have added to
+keybindings.
