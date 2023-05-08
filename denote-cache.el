@@ -36,6 +36,12 @@
 (require 'cl-seq)
 
 
+;; FIXME 2023-05-08: A `defcustom' must have a `:type'.  Evaluate:
+;; (info "(elisp) Customization Types")
+;;
+;; FIXME 2023-05-08: Instead of a lambda, it is better to define a
+;; named function and document it.  This makes it easier for people to
+;; test your code.
 (defcustom denote-cache-extra-processing-function (lambda (file)) "Extra processing of files")
 
 (defvar denote-cache--cache (make-hash-table :test 'equal) "info cache")
