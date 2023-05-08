@@ -1,5 +1,13 @@
-;;-*- lexical-binding: t -*-
+;;; denote-cache.el --- ONE LINE DESCRIPTION HERE -*- lexical-binding: t -*-
 
+;; Copyright (C) 2023  COPYRIGHT HOLDER HERE
+
+;; Author: AUTHOR NAME HERE relict007 <utils+sr.ht@kotlak.com>
+;; Maintainer: AUTHOR NAME HERE relict007 <utils+sr.ht@kotlak.com>
+;; URL: https://git.sr.ht/~relict007/denote-cache
+;; Mailing-List: MAILING LIST URL HERE
+;; Version: 0.0.0
+;; Package-Requires: ((emacs "28.1") (denote "1.2.0"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -16,6 +24,11 @@
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+;;; Commentary:
+;;
+;; YOUR DOCUMENTATION HERE.
+
+;;; Code:
 
 (require 'denote)
 (require 'xref)
@@ -324,3 +337,4 @@
     (message (concat "file " file " not found in cache"))))
 
 (provide 'denote-cache)
+;;; denote-cache.el ends here
