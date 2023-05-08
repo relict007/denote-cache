@@ -309,5 +309,16 @@
             (cdr pair)
             ) links))
 
+(defun denote-cache-put-value (file key value)
+  "Save a key/value pair associated with the file"
+  (if-let ((info (denote-cache--get-file-info file)))
+      (puthash key value info)
+    (message (concat "file " file " not found in cache"))))
+
+(defun denote-cache-get-value (file key)
+  "Get value for a key pair associated with the file"
+  (if-let ((info (denote-cache--get-file-info file)))
+      (gethash key info)
+    (message (concat "file " file " not found in cache"))))
 
 (provide 'denote-cache)
