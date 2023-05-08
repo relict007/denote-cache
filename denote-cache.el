@@ -87,7 +87,7 @@
   )
 
 (defun denote-cache--handle-file-add (file)
-  "Handle event of a file being added."
+  "Handle event of FILE being added."
   (when (denote-cache--is-denote-file file)
     (message (concat "adding file " file))
     (denote-cache--add-file-in-cache file)
@@ -95,7 +95,7 @@
     ))
 
 (defun denote-cache--handle-file-delete (file)
-  "Handle event of a file being deleted"
+  "Handle event of FILE being deleted"
   (message (concat "delete " file))
   
   (when (denote-cache--is-denote-file file)
@@ -116,7 +116,7 @@
   )
 
 (defun denote-cache--delete-file-hook (file &optional _trash)
-  "Hook to run after a file is deleted."  
+  "Hook to run after FILE is deleted."
   (denote-cache--handle-file-delete file))
 
 ;;;###autoload
@@ -149,7 +149,7 @@
       ))))
 
 (defun denote-cache--retrieve-info (file)
-  "Retrieve all the info about the file (no cache)."
+  "Retrieve all the info about FILE (no cache)."
   (let*(
         (filetype (denote-filetype-heuristics file))
         (title (if (eq filetype 'org) (or (denote-retrieve-title-value file filetype) (denote-retrieve-filename-title file)) (denote-retrieve-filename-title file)))
@@ -196,19 +196,19 @@
   (denote-cache--add-links file)  
   )
 
-(defun denote-cache--add-file-in-cache(file)
-  "Add file in the cache while retrieving its info."
+(defun denote-cache--add-file-in-cache (file)
+  "Add FILE in the cache while retrieving its info."
   (puthash file (denote-cache--retrieve-info file) denote-cache--cache)
   (denote-cache--add-links file)
   )
 
 (defun denote-cache--delete-file-from-cache (file)
-  "Delete file from cache while updating forward and backlinks."
+  "Delete FILE from cache while updating forward and backlinks."
   (remhash file denote-cache--cache)
   (denote-cache--delete-links file))
 
 (defun denote-cache--update-file-in-cache (file)
-  "Update file in cache."
+  "Update FILE in cache."
   (message (concat "updated file " file))
   (puthash file (denote-cache--retrieve-info file) denote-cache--cache)
   (denote-cache--update-links file))
@@ -345,7 +345,7 @@
             ) links))
 
 (defun denote-cache-get-value (file key)
-  "Get value for a key pair associated with the file."
+  "Get value for KEY pair associated with FILE."
   (if-let ((info (denote-cache--get-file-info file)))
       (gethash key info)
     (message (concat "file " file " not found in cache"))))
