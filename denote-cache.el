@@ -103,12 +103,14 @@
         (denote-cache--delete-file-from-cache file)
         (denote-cache--run-post-cache-update-hook)))
 
+;; FIXME 2023-05-08: Document OLD-FILE NEW-FILE-OR-DIR
 (defun denote-cache--post-rename-file-hook (old-file new-file-or-dir &rest _args)
   "Hook to run after a file is renamed."
   (message (concat "post rename " new-file-or-dir))
   (denote-cache--handle-file-add new-file-or-dir)
   )
 
+;; FIXME 2023-05-08: Document OLD-FILE NEW-FILE-OR-DIR
 (defun denote-cache--pre-rename-file-hook (old-file new-file-or-dir &rest _args)
   "Hook to run before a file is renamed."
   (message (concat "pre rename " new-file-or-dir))
@@ -173,6 +175,7 @@
           (puthash key value info))))
     info))
 
+;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache--add-links (file)
   ;; (message (concat "adding links " file))
   ;; (message (concat "links " (prin1-to-string denote-cache--links-cache)))
@@ -183,6 +186,7 @@
     (dolist (link forwardlinks)
       (add-to-list 'denote-cache--links-cache (cons file link)))))
 
+;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache--delete-links (file)
   ;; (message (concat "delete links " file))
   (setq denote-cache--links-cache
@@ -190,6 +194,7 @@
                         (or (equal (car pair) file) (equal (cdr pair) file)))
                       denote-cache--links-cache)))
 
+;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache--update-links (file)
   ;; (message (concat "update links " file))  
   (denote-cache--delete-links file)
@@ -291,6 +296,7 @@
   (setq denote-cache--performance-hack-all-text-files nil)
   )
 
+;; FIXME 2023-05-08: Add missing doc string.  Document LIST, ANOTHER-LIST.
 (defun denote-cache--util-common-items (list another-list)
     (cl-intersection list another-list :test #'equal))
 
@@ -336,6 +342,7 @@
             (car pair)
             ) links))
 
+;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-forwardlinks (file)
   (setq links (cl-remove-if-not (lambda (pair)
                       (equal (car pair) file)
