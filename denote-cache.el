@@ -119,6 +119,7 @@
   "Hook to run after a file is deleted."  
   (denote-cache--handle-file-delete file))
 
+;;;###autoload
 (define-minor-mode denote-cache-autosync-mode
   "Denote cache autosync mode."
   ;;:group 'denote-cache
