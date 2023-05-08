@@ -42,12 +42,12 @@
 ;; FIXME 2023-05-08: Instead of a lambda, it is better to define a
 ;; named function and document it.  This makes it easier for people to
 ;; test your code.
-(defcustom denote-cache-extra-processing-function (lambda (file)) "Extra processing of files")
+(defcustom denote-cache-extra-processing-function (lambda (file)) "Extra processing of files.")
 
-(defvar denote-cache--cache (make-hash-table :test 'equal) "info cache")
+(defvar denote-cache--cache (make-hash-table :test 'equal) "info cache.")
 (defvar denote-cache--links-cache '() "links cache")
-(defvar denote-cache--performance-hack-all-files nil "temporary list of all denote files")
-(defvar denote-cache--performance-hack-all-text-files nil "temporary list of all denote text files")
+(defvar denote-cache--performance-hack-all-files nil "temporary list of all denote files.")
+(defvar denote-cache--performance-hack-all-text-files nil "temporary list of all denote text files.")
 
 
 (defvar denote-cache-post-cache-update-hook nil
@@ -64,7 +64,7 @@
   )
 
 (defun denote-cache--retrieve-backlinks (file)
-  "Retrieve backlinks using denote native apis. No cache"
+  "Retrieve backlinks using denote native apis.  No cache."
   (setq identifier (denote-retrieve-filename-identifier file))
   (delete file (sort
                 (cl-remove-duplicates
@@ -74,7 +74,7 @@
                 #'string-lessp)))
 
 (defun denote-cache--retrieve-forwardlinks (file)
-  "Retrieve forward links, no cache"
+  "Retrieve forward links, no cache."
   (setq file-type (denote-filetype-heuristics file))
   (if (eq file-type 'org)
       (let* (
@@ -87,7 +87,7 @@
   )
 
 (defun denote-cache--handle-file-add (file)
-  "Handle event of a file being added"
+  "Handle event of a file being added."
   (when (denote-cache--is-denote-file file)
     (message (concat "adding file " file))
     (denote-cache--add-file-in-cache file)
@@ -104,23 +104,23 @@
         (denote-cache--run-post-cache-update-hook)))
 
 (defun denote-cache--post-rename-file-hook (old-file new-file-or-dir &rest _args)
-  "Hook to run after a file is renamed"
+  "Hook to run after a file is renamed."
   (message (concat "post rename " new-file-or-dir))
   (denote-cache--handle-file-add new-file-or-dir)
   )
 
 (defun denote-cache--pre-rename-file-hook (old-file new-file-or-dir &rest _args)
-  "Hook to run before a file is renamed"
+  "Hook to run before a file is renamed."
   (message (concat "pre rename " new-file-or-dir))
   (denote-cache--handle-file-delete old-file)
   )
 
 (defun denote-cache--delete-file-hook (file &optional _trash)
-  "Hook to run after a file is deleted"  
+  "Hook to run after a file is deleted."  
   (denote-cache--handle-file-delete file))
 
 (define-minor-mode denote-cache-autosync-mode
-  "denote cache autosync mode"
+  "Denote cache autosync mode."
   ;;:group 'denote-cache
   :global t
   :init-value nil
@@ -148,7 +148,7 @@
       ))))
 
 (defun denote-cache--retrieve-info (file)
-  "Retrieve all the info about the file (no cache)"
+  "Retrieve all the info about the file (no cache)."
   (let*(
         (filetype (denote-filetype-heuristics file))
         (title (if (eq filetype 'org) (or (denote-retrieve-title-value file filetype) (denote-retrieve-filename-title file)) (denote-retrieve-filename-title file)))
@@ -196,24 +196,24 @@
   )
 
 (defun denote-cache--add-file-in-cache(file)
-  "Add file in the cache while retrieving its info"
+  "Add file in the cache while retrieving its info."
   (puthash file (denote-cache--retrieve-info file) denote-cache--cache)
   (denote-cache--add-links file)
   )
 
 (defun denote-cache--delete-file-from-cache (file)
-  "Delete file from cache while updating forward and backlinks"
+  "Delete file from cache while updating forward and backlinks."
   (remhash file denote-cache--cache)
   (denote-cache--delete-links file))
 
 (defun denote-cache--update-file-in-cache (file)
-  "Update file in cache"
+  "Update file in cache."
   (message (concat "updated file " file))
   (puthash file (denote-cache--retrieve-info file) denote-cache--cache)
   (denote-cache--update-links file))
 
 (defun denote-cache--org-capture-after-finalize-hook ()
-  "Hook to run after org-capture finalize"
+  "Hook to run after org-capture finalize."
   (denote-cache-update-cache))
 
 (defun denote-cache--after-save-hook ()
@@ -240,14 +240,14 @@
   )
   
 (defun denote-cache-rebuild-cache()
-  "Rebuild cache"
+  "Rebuild cache."
   (interactive)
   (clrhash denote-cache--cache)
   (denote-cache-update-cache)
   )
 
 (defun denote-cache-update-cache()
-  "Update all the cache"
+  "Update all the cache."
   (interactive)
   (setq denote-cache--performance-hack-all-files (denote-directory-files))
   (setq denote-cache--performance-hack-all-text-files (denote-directory-text-only-files))
@@ -299,27 +299,34 @@
   (cl-set-difference list items-to-remove :test #'equal))
 
 (defun denote-cache-get-all-files-from-cache ()
-  "Get all denote note files"
+  "Get all denote note files."
   (hash-table-keys denote-cache--cache))
 
+;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache--get-file-info (file)
   (gethash file denote-cache--cache))
 
+;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-title (file)
   (gethash "title" (denote-cache--get-file-info file)))
 
+;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-ftime (file)
   (gethash "ftime" (denote-cache--get-file-info file)))
 
+;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-filetype (file)
   (gethash "filetype" (denote-cache--get-file-info file)))
 
+;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-keywords (file)
   (gethash "keywords" (denote-cache--get-file-info file)))
 
+;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-extension (file)
   (gethash "extension" (denote-cache--get-file-info file)))
 
+;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-backlinks (file)
   (setq links (cl-remove-if-not (lambda (pair)
                       (equal (cdr pair) file)
@@ -337,7 +344,7 @@
             ) links))
 
 (defun denote-cache-get-value (file key)
-  "Get value for a key pair associated with the file"
+  "Get value for a key pair associated with the file."
   (if-let ((info (denote-cache--get-file-info file)))
       (gethash key info)
     (message (concat "file " file " not found in cache"))))
