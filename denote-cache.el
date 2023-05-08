@@ -335,21 +335,25 @@
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-backlinks (file)
-  (setq links (cl-remove-if-not (lambda (pair)
-                      (equal (cdr pair) file)
-                      ) denote-cache--links-cache))
-  (mapcar (lambda (pair)
-            (car pair)
-            ) links))
+  (setq links (cl-remove-if-not
+               (lambda (pair)
+                 (equal (cdr pair) file))
+               denote-cache--links-cache))
+  (mapcar
+   (lambda (pair)
+     (car pair))
+   links))
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-forwardlinks (file)
-  (setq links (cl-remove-if-not (lambda (pair)
-                      (equal (car pair) file)
-                      ) denote-cache--links-cache))
-  (mapcar (lambda (pair)
-            (cdr pair)
-            ) links))
+  (setq links (cl-remove-if-not
+               (lambda (pair)
+                 (equal (car pair) file))
+               denote-cache--links-cache))
+  (mapcar
+   (lambda (pair)
+     (cdr pair))
+   links))
 
 (defun denote-cache-get-value (file key)
   "Get value for KEY pair associated with FILE."
