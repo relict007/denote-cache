@@ -22,6 +22,9 @@
 (require 'cl-lib)
 (require 'cl-seq)
 
+
+(defcustom denote-cache-extra-processing-function (lambda (file)) "Extra processing of files")
+
 (defvar denote-cache--cache (make-hash-table :test 'equal) "info cache")
 (defvar denote-cache--links-cache '() "links cache")
 (defvar denote-cache--performance-hack-all-files nil "temporary list of all denote files")
@@ -135,15 +138,20 @@
         (keywords-sorted (if (null keywords) keywords (denote-keywords-sort keywords)))
         (extension (downcase (file-name-extension file)))
         (info (make-hash-table :test 'equal))
+        (extra (funcall denote-cache-extra-processing-function file))
         )
     (puthash "title" title info)
     (puthash "ftime" ftime info)
     (puthash "filetype" filetype info)
     (puthash "keywords" keywords-sorted info)
     (puthash "extension" extension info)
-    info
-    )   
-  )
+    (when extra
+      (dolist (e extra)
+        (let* ((key (car e))
+               (value (cdr e)))
+          ;; (message (concat "adding " key ", value " value))
+          (puthash key value info))))
+    info))
 
 (defun denote-cache--add-links (file)
   ;; (message (concat "adding links " file))
@@ -308,12 +316,6 @@
   (mapcar (lambda (pair)
             (cdr pair)
             ) links))
-
-(defun denote-cache-put-value (file key value)
-  "Save a key/value pair associated with the file"
-  (if-let ((info (denote-cache--get-file-info file)))
-      (puthash key value info)
-    (message (concat "file " file " not found in cache"))))
 
 (defun denote-cache-get-value (file key)
   "Get value for a key pair associated with the file"
