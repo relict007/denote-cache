@@ -55,13 +55,11 @@
 
 (defun denote-cache--is-denote-file (file)
   ;;(or (denote-file-is-note-p file) (denote-file-has-identifier-p file))
-  (or (denote-file-is-note-p file) (and (denote-file-has-identifier-p file) (denote-get-file-name-relative-to-denote-directory file)))
-  )
+  (or (denote-file-is-note-p file) (and (denote-file-has-identifier-p file) (denote-get-file-name-relative-to-denote-directory file))))
 
 (defun denote-cache--run-post-cache-update-hook ()
   "Run the post cache save hooks"
-  (run-hooks 'denote-cache-post-cache-update-hook)
-  )
+  (run-hooks 'denote-cache-post-cache-update-hook))
 
 (defun denote-cache--retrieve-backlinks (file)
   "Retrieve backlinks using denote native apis.  No cache."
@@ -99,15 +97,13 @@
 (defun denote-cache--post-rename-file-hook (old-file new-file-or-dir &rest _args)
   "Hook to run after a file is renamed."
   (message (concat "post rename " new-file-or-dir))
-  (denote-cache--handle-file-add new-file-or-dir)
-  )
+  (denote-cache--handle-file-add new-file-or-dir))
 
 ;; FIXME 2023-05-08: Document OLD-FILE NEW-FILE-OR-DIR
 (defun denote-cache--pre-rename-file-hook (old-file new-file-or-dir &rest _args)
   "Hook to run before a file is renamed."
   (message (concat "pre rename " new-file-or-dir))
-  (denote-cache--handle-file-delete old-file)
-  )
+  (denote-cache--handle-file-delete old-file))
 
 (defun denote-cache--delete-file-hook (file &optional _trash)
   "Hook to run after FILE is deleted."
@@ -129,8 +125,7 @@
       (advice-add #'dired-rename-file :before  #'denote-cache--pre-rename-file-hook)
       (advice-add #'dired-rename-file :after  #'denote-cache--post-rename-file-hook)
       (advice-add #'delete-file :before #'denote-cache--delete-file-hook)
-      (advice-add #'vc-delete-file :before #'denote-cache--delete-file-hook)
-      )
+      (advice-add #'vc-delete-file :before #'denote-cache--delete-file-hook))
      (t
       (advice-remove #'rename-file #'denote-cache--pre-rename-file-hook)
       (advice-remove #'rename-file #'denote-cache--post-rename-file-hook)
@@ -139,8 +134,7 @@
       (advice-remove #'dired-rename-file #'denote-cache--pre-rename-file-hook)
       (advice-remove #'dired-rename-file #'denote-cache--post-rename-file-hook)
       (advice-remove #'delete-file #'denote-cache--delete-file-hook)
-      (advice-remove #'vc-delete-file #'denote-cache--delete-file-hook)
-      ))))
+      (advice-remove #'vc-delete-file #'denote-cache--delete-file-hook)))))
 
 (defun denote-cache--retrieve-info (file)
   "Retrieve all the info about FILE (no cache)."
@@ -189,14 +183,12 @@
 (defun denote-cache--update-links (file)
   ;; (message (concat "update links " file))  
   (denote-cache--delete-links file)
-  (denote-cache--add-links file)  
-  )
+  (denote-cache--add-links file))
 
 (defun denote-cache--add-file-in-cache (file)
   "Add FILE in the cache while retrieving its info."
   (puthash file (denote-cache--retrieve-info file) denote-cache--cache)
-  (denote-cache--add-links file)
-  )
+  (denote-cache--add-links file))
 
 (defun denote-cache--delete-file-from-cache (file)
   "Delete FILE from cache while updating forward and backlinks."
@@ -238,8 +230,7 @@
   "Rebuild cache."
   (interactive)
   (clrhash denote-cache--cache)
-  (denote-cache-update-cache)
-  )
+  (denote-cache-update-cache))
 
 (defun denote-cache-update-cache()
   "Update all the cache."
