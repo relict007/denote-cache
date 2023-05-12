@@ -72,7 +72,7 @@
 (defun denote-cache--retrieve-forwardlinks (file)
   "Retrieve forward links, no cache."
   ;;TODO this is a temprary hack to speedup indexing
-  (if (equal (file-name-extension file) "org")
+  (if (denote-file-has-supported-extension-p file)
       (condition-case err
           (denote-link-return-links file)
         (user-error '()))
@@ -146,14 +146,13 @@
   "Retrieve all the info about FILE (no cache)."
   (let*(
         (filetype (denote-filetype-heuristics file))
-        (title (if (eq filetype 'org) (or (denote-retrieve-title-value file filetype) (denote-retrieve-filename-title file)) (denote-retrieve-filename-title file)))
+        (title (if (denote-file-has-supported-extension-p file) (or (denote-retrieve-title-value file filetype) (denote-retrieve-filename-title file)) (denote-retrieve-filename-title file)))
         (ftime (file-attribute-modification-time (file-attributes file)))
         (keywords (denote-extract-keywords-from-path file))
         (keywords-sorted (if (null keywords) keywords (denote-keywords-sort keywords)))
         (extension (downcase (file-name-extension file)))
         (info (make-hash-table :test 'equal))
-        (extra (funcall denote-cache-extra-processing-function file))
-        )
+        (extra (funcall denote-cache-extra-processing-function file)))
     (puthash "title" title info)
     (puthash "ftime" ftime info)
     (puthash "filetype" filetype info)
@@ -230,12 +229,10 @@
 (add-hook 'org-capture-after-finalize-hook #'denote-cache--org-capture-after-finalize-hook)
 
 (defun denote-cache--performance-all-files-wrapper ()
-  denote-cache--performance-hack-all-files
-  )
+  denote-cache--performance-hack-all-files)
 
 (defun denote-cache--performance-all-text-files-wrapper ()
-  denote-cache--performance-hack-all-text-files
-  )
+  denote-cache--performance-hack-all-text-files)
   
 (defun denote-cache-rebuild-cache()
   "Rebuild cache."
@@ -277,13 +274,12 @@
       (denote-cache--delete-file-from-cache f))
 
     (denote-cache--run-post-cache-update-hook)
-    (message "update done")
-    )
+    (message "update done"))
+  
   (advice-remove #'denote-directory-files #'denote-cache--performance-all-files-wrapper)
   (advice-remove #'denote-directory-text-only-files #'denote-cache--performance-all-text-files-wrapper)
   (setq denote-cache--performance-hack-all-files nil)
-  (setq denote-cache--performance-hack-all-text-files nil)
-  )
+  (setq denote-cache--performance-hack-all-text-files nil))
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document LIST, ANOTHER-LIST.
 (defun denote-cache--util-common-items (list another-list)
