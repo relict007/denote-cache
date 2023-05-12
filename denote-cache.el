@@ -87,9 +87,7 @@
 (defun denote-cache--handle-file-delete (file)
   "Handle event of FILE being deleted"
   (message (concat "delete " file))
-  
   (when (denote-cache--is-denote-file file)
-        (message (concat "actuauly delete " file))
         (denote-cache--delete-file-from-cache file)
         (denote-cache--run-post-cache-update-hook)))
 
@@ -208,11 +206,9 @@
 (defun denote-cache--after-save-hook ()
   "Hook to run after a file is saved"
   ;; (message "save hook")
-  (when-let* (
-              (file (buffer-file-name))
+  (when-let* ((file (buffer-file-name))
               ;;((message (concat "file" (denote-cache--is-denote-file file))))
-              (isnote (denote-cache--is-denote-file file)) 
-              )
+              (isnote (denote-cache--is-denote-file file)))
     (message (concat "after save hook " file))
     (denote-cache--update-file-in-cache file)
     (denote-cache--run-post-cache-update-hook)))
