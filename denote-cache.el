@@ -65,26 +65,18 @@
 
 (defun denote-cache--retrieve-backlinks (file)
   "Retrieve backlinks using denote native apis.  No cache."
-  (setq identifier (denote-retrieve-filename-identifier file))
-  (delete file (sort
-                (cl-remove-duplicates
-                 (mapcar #'xref-location-group
-                         (mapcar #'xref-match-item-location
-                                 (xref-matches-in-files identifier (denote-directory-text-only-files)))) :test 'equal)
-                #'string-lessp)))
+  (condition-case err
+      (denote-link-return-backlinks file)
+    (user-error '())))
 
 (defun denote-cache--retrieve-forwardlinks (file)
   "Retrieve forward links, no cache."
-  (setq file-type (denote-filetype-heuristics file))
-  (if (eq file-type 'org)
-      (let* (
-             (regexp (denote--link-in-context-regexp file-type))
-             (files (denote-link--expand-identifiers regexp)))
-        (delete file files)
-        )
-    '()
-    )
-  )
+  ;;TODO this is a temprary hack to speedup indexing
+  (if (equal (file-name-extension file) "org")
+      (condition-case err
+          (denote-link-return-links file)
+        (user-error '()))
+    '()))
 
 (defun denote-cache--handle-file-add (file)
   "Handle event of FILE being added."
@@ -274,18 +266,15 @@
                                           (equal ftime ftime-cached))) common-files)))
     (dolist (f updated-files)
       (message (concat "updated: " f))
-      (denote-cache--update-file-in-cache f)
-      )
+      (denote-cache--update-file-in-cache f))
 
     (dolist (f new-files)
-      (message (concat "added: " f))
       (denote-cache--add-file-in-cache f)
-      )
+      (message (concat "added: " f)))
 
     (dolist (f deleted-files)
       (message (concat "deleted: " f))
-      (denote-cache--delete-file-from-cache f)
-      )
+      (denote-cache--delete-file-from-cache f))
 
     (denote-cache--run-post-cache-update-hook)
     (message "update done")
