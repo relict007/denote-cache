@@ -63,18 +63,14 @@
 
 (defun denote-cache--retrieve-backlinks (file)
   "Retrieve backlinks using denote native apis.  No cache."
-  (condition-case err
-      (denote-link-return-backlinks file)
-    (user-error '())))
+  (or (denote-link-return-backlinks file) '()))
 
 (defun denote-cache--retrieve-forwardlinks (file)
   "Retrieve forward links, no cache."
   ;;TODO this is a temprary hack to speedup indexing
-  (if (denote-file-has-supported-extension-p file)
-      (condition-case err
-          (denote-link-return-links file)
-        (user-error '()))
-    '()))
+  (or (when (denote-file-has-supported-extension-p file)
+        (denote-link-return-forelinks file))
+      '()))
 
 (defun denote-cache--handle-file-add (file)
   "Handle event of FILE being added."
