@@ -56,21 +56,30 @@
   "Key that we use for a note\'s keywords in the hash table")
 
 (defun denote-cache-extra-processing-function-default (file)
-    "Default function which is called with the denote FILE which is
+    "Default function which is called with the Denote FILE which is
 being added to the cache. This function is supposed to return an
 alist with key/value pairs. Key must be an string, value can be
 any elisp object. The function `denote-cache-get-value' can then
-be used to retrieve the saved value for the key")
+be used to retrieve the saved value for the key
+FILE is the complete path of the Denote note.
+")
 
 (defcustom denote-cache-extra-processing-function #'denote-cache-extra-processing-function-default
-  "User customizable function which is called at the time a denote
-file is being added to the cache. Users can set this to a custom
-function which will be called with the denote file as the
-argument. This custom function is supposed to return an alist
-with key/value pairs which will be added to the cache.
-Also see `denote-cache-extra-processing-function-default'"
-  :type 'function
-  )
+  "User customizable function so that users can save arbitray
+key/value data related to a Denote file in the cache. This
+function is called at the time a Denote file is being added to
+the cache. Users can set this to a custom function which will be
+called with the denote FILE as the argument. This custom function
+is supposed to return an alist with key/value pairs which will be
+added to the cache.
+
+FILE is the complete path of the Denote note. This function is
+called for all Denote files, including binary/non-text
+files. Don\'t assume that it will only be a txt/org/md etc file.
+
+ Also see
+`denote-cache-extra-processing-function-default'"
+  :type 'function)
 
 (defvar denote-cache--cache (make-hash-table :test 'equal) "info cache.")
 (defvar denote-cache--links-cache '() "links cache")
@@ -175,7 +184,7 @@ Also see `denote-cache-extra-processing-function-default'"
     (when extra
       (dolist (e extra)
         (let* ((key (car e))
-               (value (cdr e)))
+               (value (cdr e)))          
           ;; (message (concat "adding " key ", value " value))
           (puthash key value info))))
     info))
