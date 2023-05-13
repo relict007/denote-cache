@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2023  COPYRIGHT HOLDER HERE
 
-;; Author: AUTHOR NAME HERE relict007 <utils+sr.ht@kotlak.com>
+;; Author: AUTHOR  relict007 <utils+sr.ht@kotlak.com>
 ;; Maintainer: AUTHOR NAME HERE relict007 <utils+sr.ht@kotlak.com>
 ;; URL: https://git.sr.ht/~relict007/denote-cache
 ;; Mailing-List: MAILING LIST URL HERE
@@ -42,6 +42,21 @@
 ;; FIXME 2023-05-08: Instead of a lambda, it is better to define a
 ;; named function and document it.  This makes it easier for people to
 ;; test your code.
+
+(defconst denote-cache--key-title "denote-cache--key-title"
+  "Key that we use for a note\'s title in the hash table")
+
+(defconst denote-cache--key-ftime "denote-cache--key-ftime"
+  "Key that we use for a note\'s ftime in the hash table")
+
+(defconst denote-cache--key-extension "denote-cache--key-extension"
+  "Key that we use for a note\'s file extension in the hash table")
+
+(defconst denote-cache--key-keywords "denote-cache--key-keywords"
+  "Key that we use for a note\'s keywords in the hash table")
+
+
+
 (defcustom denote-cache-extra-processing-function (lambda (file)) "Extra processing of files.")
 
 (defvar denote-cache--cache (make-hash-table :test 'equal) "info cache.")
@@ -140,11 +155,10 @@
         (extension (downcase (file-name-extension file)))
         (info (make-hash-table :test 'equal))
         (extra (funcall denote-cache-extra-processing-function file)))
-    (puthash "title" title info)
-    (puthash "ftime" ftime info)
-    (puthash "filetype" filetype info)
-    (puthash "keywords" keywords-sorted info)
-    (puthash "extension" extension info)
+    (puthash denote-cache--key-title title info)
+    (puthash denote-cache--key-ftime ftime info)
+    (puthash denote-cache--key-keywords keywords-sorted info)
+    (puthash denote-cache--key-extension extension info)
     (when extra
       (dolist (e extra)
         (let* ((key (car e))
@@ -282,23 +296,19 @@
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-title (file)
-  (gethash "title" (denote-cache--get-file-info file)))
+  (gethash denote-cache--key-title (denote-cache--get-file-info file)))
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-ftime (file)
-  (gethash "ftime" (denote-cache--get-file-info file)))
-
-;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
-(defun denote-cache-get-filetype (file)
-  (gethash "filetype" (denote-cache--get-file-info file)))
+  (gethash denote-cache--key-ftime (denote-cache--get-file-info file)))
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-keywords (file)
-  (gethash "keywords" (denote-cache--get-file-info file)))
+  (gethash denote-cache--key-keywords (denote-cache--get-file-info file)))
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-extension (file)
-  (gethash "extension" (denote-cache--get-file-info file)))
+  (gethash denote-cache--key-extension (denote-cache--get-file-info file)))
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-backlinks (file)
