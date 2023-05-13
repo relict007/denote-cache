@@ -55,9 +55,22 @@
 (defconst denote-cache--key-keywords "denote-cache--key-keywords"
   "Key that we use for a note\'s keywords in the hash table")
 
+(defun denote-cache-extra-processing-function-default (file)
+    "Default function which is called with the denote FILE which is
+being added to the cache. This function is supposed to return an
+alist with key/value pairs. Key must be an string, value can be
+any elisp object. The function `denote-cache-get-value' can then
+be used to retrieve the saved value for the key")
 
-
-(defcustom denote-cache-extra-processing-function (lambda (file)) "Extra processing of files.")
+(defcustom denote-cache-extra-processing-function #'denote-cache-extra-processing-function-default
+  "User customizable function which is called at the time a denote
+file is being added to the cache. Users can set this to a custom
+function which will be called with the denote file as the
+argument. This custom function is supposed to return an alist
+with key/value pairs which will be added to the cache.
+Also see `denote-cache-extra-processing-function-default'"
+  :type 'function
+  )
 
 (defvar denote-cache--cache (make-hash-table :test 'equal) "info cache.")
 (defvar denote-cache--links-cache '() "links cache")
