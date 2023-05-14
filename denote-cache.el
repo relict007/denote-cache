@@ -56,24 +56,24 @@
   "Key that we use for a note\'s keywords in the hash table")
 
 (defun denote-cache-extra-processing-function-default (file)
-    "Default function which is called with the Denote FILE which is
-being added to the cache. This function is supposed to return an
-alist with key/value pairs. Key must be an string, value can be
-any elisp object. The function `denote-cache-get-value' can then
-be used to retrieve the saved value for the key
-FILE is the complete path of the Denote note.
-")
+  "Default extra processing function.
+This is called with the Denote FILE which is being added to the
+cache.  This function is supposed to return an alist with
+key/value pairs.  Key must be an string, value can be any elisp
+object.  The function `denote-cache-get-value' can then be used to
+retrieve the saved value for the key FILE is the complete path of
+the Denote note.")
 
 (defcustom denote-cache-extra-processing-function #'denote-cache-extra-processing-function-default
-  "User customizable function so that users can save arbitray
-key/value data related to a Denote file in the cache. This
+  "User customizable function for saving custom data in cache.
+key/value data related to a Denote file in the cache.  This
 function is called at the time a Denote file is being added to
 the cache. Users can set this to a custom function which will be
-called with the denote FILE as the argument. This custom function
+called with the denote FILE as the argument.  This custom function
 is supposed to return an alist with key/value pairs which will be
 added to the cache.
 
-FILE is the complete path of the Denote note. This function is
+FILE is the complete path of the Denote note.  This function is
 called for all Denote files, including binary/non-text
 files. Don\'t assume that it will only be a txt/org/md etc file.
 
@@ -91,7 +91,6 @@ files. Don\'t assume that it will only be a txt/org/md etc file.
   "Hook for cache updates")
 
 (defun denote-cache--is-denote-file (file)
-  ;;(or (denote-file-is-note-p file) (denote-file-has-identifier-p file))
   (or (denote-file-is-note-p file) (and (denote-file-has-identifier-p file) (denote-get-file-name-relative-to-denote-directory file))))
 
 (defun denote-cache--run-post-cache-update-hook ()
@@ -99,11 +98,13 @@ files. Don\'t assume that it will only be a txt/org/md etc file.
   (run-hooks 'denote-cache-post-cache-update-hook))
 
 (defun denote-cache--retrieve-backlinks (file)
-  "Retrieve backlinks using denote native apis.  No cache."
+  "Retrieve backlinks for FILE using denote native apis.
+Does not use cache."
   (denote-link-return-backlinks file))
 
 (defun denote-cache--retrieve-forwardlinks (file)
-  "Retrieve forward links, no cache."
+  "Retrieve forward links for FILE using denote native apis.
+Does not use cache."
   ;;TODO this is a temprary hack to speedup indexing
   (when (denote-file-has-supported-extension-p file)
         (denote-link-return-forelinks file)))
@@ -140,7 +141,10 @@ files. Don\'t assume that it will only be a txt/org/md etc file.
 
 ;;;###autoload
 (define-minor-mode denote-cache-autosync-mode
-  "Denote cache autosync mode."
+  "Enable autosync mode where denote-cache watches for file updates
+within emacs and automatically refreshes the cache. There still
+can be certain scenarios where it misses the file update, in that
+case run `denote-cache-update-cache'"
   ;;:group 'denote-cache
   :global t
   :init-value nil
@@ -229,7 +233,7 @@ files. Don\'t assume that it will only be a txt/org/md etc file.
   (denote-cache--update-links file))
 
 (defun denote-cache--org-capture-after-finalize-hook ()
-  "Hook to run after org-capture finalize."
+  "Hook to run after `org-capture' finalize."
   (denote-cache-update-cache))
 
 (defun denote-cache--after-save-hook ()
@@ -252,13 +256,18 @@ files. Don\'t assume that it will only be a txt/org/md etc file.
   denote-cache--performance-hack-all-text-files)
   
 (defun denote-cache-rebuild-cache()
-  "Rebuild cache."
+  "Rebuild the whole cache.
+It removes all previous cached data and builds the cache again.
+See also `denote-cache-update-cache'"
   (interactive)
   (clrhash denote-cache--cache)
   (denote-cache-update-cache))
 
 (defun denote-cache-update-cache()
-  "Update all the cache."
+  "Update all the cache. This finds out added, modified or deleted
+files from the present cache state and appropriately updates the
+cache with the new data.
+See also `denote-cache-rebuild-cache'"
   (interactive)
   (setq denote-cache--performance-hack-all-files (denote-directory-files))
   (setq denote-cache--performance-hack-all-text-files (denote-directory-text-only-files))
@@ -299,7 +308,6 @@ files. Don\'t assume that it will only be a txt/org/md etc file.
 
 (defun denote-cache--utils-remove-matching-items (list items-to-remove)
   "Remove all items from LIST that are also present in ITEMS-TO-REMOVE."
-  ;;(cl-remove-if (lambda (item) (memq item items-to-remove)) list))
   (cl-set-difference list items-to-remove :test #'equal))
 
 (defun denote-cache-get-all-files-from-cache ()
@@ -349,10 +357,10 @@ files. Don\'t assume that it will only be a txt/org/md etc file.
    links))
 
 (defun denote-cache-get-value (file key)
-  "Get value for KEY pair associated with FILE."
-  (if-let ((info (denote-cache--get-file-info file)))
-      (gethash key info)
-    (message (concat "file " file " not found in cache"))))
+  "Get value for KEY associated with FILE from the cache that was
+saved using `denote-cache-extra-processing-function'"
+  (when-let ((info (denote-cache--get-file-info file)))
+      (gethash key info)))
 
 (provide 'denote-cache)
 ;;; denote-cache.el ends here
