@@ -65,7 +65,8 @@ cache.  This function is supposed to return an alist with
 key/value pairs.  Key must be an string, value can be any elisp
 object.  The function `denote-cache-get-value' can then be used to
 retrieve the saved value for the key FILE is the complete path of
-the Denote note.")
+the Denote note."
+  nil)
 
 (defcustom denote-cache-extra-processing-function #'denote-cache-extra-processing-function-default
   "User customizable function for saving custom data in cache.
