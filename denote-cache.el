@@ -258,7 +258,7 @@ case run `denote-cache-update-cache'"
 (add-hook 'after-save-hook #'denote-cache--after-save-hook)
 (add-hook 'org-capture-after-finalize-hook #'denote-cache--org-capture-after-finalize-hook)
 
-(defun denote-cache--performance-all-files-wrapper ()
+(defun denote-cache--performance-all-files-wrapper (&optional files-matching-regexp omit-current text-only)
   denote-cache--performance-hack-all-files)
 
 (defun denote-cache--performance-all-text-files-wrapper ()
@@ -279,7 +279,7 @@ cache with the new data.
 See also `denote-cache-rebuild-cache'"
   (interactive)
   (setq denote-cache--performance-hack-all-files (denote-directory-files))
-  (setq denote-cache--performance-hack-all-text-files (denote-directory-text-only-files))
+  (setq denote-cache--performance-hack-all-text-files (denote-directory-files nil nil t))
   (advice-add #'denote-directory-files :override  #'denote-cache--performance-all-files-wrapper)
   (advice-add #'denote-directory-text-only-files :override  #'denote-cache--performance-all-text-files-wrapper)
   (let* ((files denote-cache--performance-hack-all-files)
