@@ -176,7 +176,7 @@ case run `denote-cache-update-cache'"
 (defun denote-cache--retrieve-info (file)
   "Retrieve all the info about FILE (no cache)."
   (let* ((filetype (denote-filetype-heuristics file))
-         (title (if (denote-file-has-supported-extension-p file) (or (denote-retrieve-title-value file filetype) (denote-retrieve-filename-title file)) (denote-retrieve-filename-title file)))
+         (title (denote-link-description-with-signature-and-title file))
          (ftime (file-attribute-modification-time (file-attributes file)))
          (keywords (denote-extract-keywords-from-path file))
          (keywords-sorted (if (null keywords) keywords (denote-keywords-sort keywords)))
