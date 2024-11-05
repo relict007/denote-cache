@@ -49,6 +49,9 @@
 (defconst denote-cache--key-ftime "denote-cache--key-ftime"
   "Key that we use for a note\'s ftime in the hash table")
 
+(defconst denote-cache--key-ctime "denote-cache--key-ctime"
+  "Key that we use for a note\'s creation time in the hash table")
+
 (defconst denote-cache--key-extension "denote-cache--key-extension"
   "Key that we use for a note\'s file extension in the hash table")
 
@@ -143,6 +146,14 @@ Does not use cache."
   "Hook to run after FILE is deleted."
   (denote-cache--handle-file-delete file))
 
+(defun denote-cache--get-file-creation-time (file)
+  "Get the file creation time on Linux using stat, return it as a Lisp timestamp."
+  (let ((output (shell-command-to-string (concat "stat --format='%W' " (shell-quote-argument file)))))
+    (if (string-match "\\([0-9]+\\)" output)
+        (let ((timestamp (string-to-number (match-string 1 output))))
+          (seconds-to-time timestamp))
+      nil)))
+
 ;;;###autoload
 (define-minor-mode denote-cache-autosync-mode
   "Enable autosync mode where denote-cache watches for file updates
@@ -177,7 +188,9 @@ case run `denote-cache-update-cache'"
   "Retrieve all the info about FILE (no cache)."
   (let* ((filetype (denote-filetype-heuristics file))
          (title (denote-link-description-with-signature-and-title file))
-         (ftime (file-attribute-modification-time (file-attributes file)))
+         (file-attrs (file-attributes file))
+         (ftime (file-attribute-modification-time file-attrs))
+         (ctime (denote-cache--get-file-creation-time file))
          (keywords (denote-extract-keywords-from-path file))
          (keywords-sorted (if (null keywords) keywords (denote-keywords-sort keywords)))
          (extension (downcase (file-name-extension file)))
@@ -187,6 +200,7 @@ case run `denote-cache-update-cache'"
          (extra (funcall denote-cache-extra-processing-function file)))
     (puthash denote-cache--key-title title info)
     (puthash denote-cache--key-ftime ftime info)
+    (puthash denote-cache--key-ctime ctime info)
     (puthash denote-cache--key-keywords keywords-sorted info)
     (puthash denote-cache--key-extension extension info)
     (when relative-path-without-trailing-slash
@@ -334,6 +348,9 @@ See also `denote-cache-rebuild-cache'"
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-ftime (file)
   (gethash denote-cache--key-ftime (denote-cache--get-file-info file)))
+
+(defun denote-cache-get-ctime (file)
+  (gethash denote-cache--key-ctime (denote-cache--get-file-info file)))
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-keywords (file)
