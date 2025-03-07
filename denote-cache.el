@@ -43,6 +43,9 @@
 ;; named function and document it.  This makes it easier for people to
 ;; test your code.
 
+(defconst denote-cache--key-id "denote-cache--key-id"
+  "Key that we use for a note\'s id in the hash table")
+
 (defconst denote-cache--key-title "denote-cache--key-title"
   "Key that we use for a note\'s title in the hash table")
 
@@ -187,6 +190,7 @@ case run `denote-cache-update-cache'"
 (defun denote-cache--retrieve-info (file)
   "Retrieve all the info about FILE (no cache)."
   (let* ((filetype (denote-filetype-heuristics file))
+         (note-id (denote-retrieve-filename-identifier file))
          (title (denote-link-description-with-signature-and-title file))
          (file-attrs (file-attributes file))
          (ftime (file-attribute-modification-time file-attrs))
@@ -198,6 +202,7 @@ case run `denote-cache-update-cache'"
          (relative-path-without-trailing-slash (when relative-path (substring relative-path 0 -1)))
          (info (make-hash-table :test 'equal))
          (extra (funcall denote-cache-extra-processing-function file)))
+    (puthash denote-cache--key-id note-id info)
     (puthash denote-cache--key-title title info)
     (puthash denote-cache--key-ftime ftime info)
     (puthash denote-cache--key-ctime ctime info)
@@ -340,6 +345,9 @@ See also `denote-cache-rebuild-cache'"
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache--get-file-info (file)
   (gethash file denote-cache--cache))
+
+(defun denote-cache-get-id (file)
+  (gethash denote-cache--key-id (denote-cache--get-file-info file)))
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-title (file)
