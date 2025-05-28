@@ -117,7 +117,7 @@ Does not use cache."
 Does not use cache."
   ;;TODO this is a temprary hack to speedup indexing
   (when (denote-file-has-supported-extension-p file)
-        (denote-link-return-forelinks file)))
+        (denote-link-return-links file)))
 
 (defun denote-cache--handle-file-add (file)
   "Handle event of FILE being added."
