@@ -191,7 +191,7 @@ case run `denote-cache-update-cache'"
   "Retrieve all the info about FILE (no cache)."
   (let* ((filetype (denote-filetype-heuristics file))
          (note-id (denote-retrieve-filename-identifier file))
-         (title (denote-link-description-with-signature-and-title file))
+         (title (denote-retrieve-title-or-filename file filetype))
          (file-attrs (file-attributes file))
          (ftime (file-attribute-modification-time file-attrs))
          (ctime (denote-cache--get-file-creation-time file))
