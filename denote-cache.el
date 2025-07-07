@@ -34,7 +34,7 @@
 (require 'xref)
 (require 'cl-lib)
 (require 'cl-seq)
-
+(require 's)
 
 ;; FIXME 2023-05-08: A `defcustom' must have a `:type'.  Evaluate:
 ;; (info "(elisp) Customization Types")
@@ -97,6 +97,9 @@ files. Don\'t assume that it will only be a txt/org/md etc file.
 (defvar denote-cache--performance-hack-all-text-files nil "temporary list of all denote text files.")
 
 
+(defvar denote-cache-parse-full-file nil
+  "Parse full file")
+
 (defvar denote-cache-post-cache-update-hook nil
   "Hook for cache updates")
 
@@ -157,6 +160,15 @@ Does not use cache."
           (seconds-to-time timestamp))
       nil)))
 
+(defun denote-cache--parse-title-from-file-name (file)
+  (let* ((split (s-split "--" file))
+         (name-with-keywords (nth 1 split))
+         (split2 (s-split "__" name-with-keywords))
+         (title (nth 0 split2))
+         (title (s-replace "-" " " title)))
+    ;;(message title)
+    title))
+
 ;;;###autoload
 (define-minor-mode denote-cache-autosync-mode
   "Enable autosync mode where denote-cache watches for file updates
@@ -191,7 +203,7 @@ case run `denote-cache-update-cache'"
   "Retrieve all the info about FILE (no cache)."
   (let* ((filetype (denote-filetype-heuristics file))
          (note-id (denote-retrieve-filename-identifier file))
-         (title (denote-retrieve-title-or-filename file filetype))
+         (title (if denote-cache-parse-full-file (denote-retrieve-title-or-filename file filetype) (denote-cache--parse-title-from-file-name file)))
          (file-attrs (file-attributes file))
          (ftime (file-attribute-modification-time file-attrs))
          (ctime (denote-cache--get-file-creation-time file))
