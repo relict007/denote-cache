@@ -61,9 +61,6 @@
 (defconst denote-cache--key-keywords "denote-cache--key-keywords"
   "Key that we use for a note\'s keywords in the hash table")
 
-(defconst denote-cache--key-relative-path "denote-cache--key-relative-path"
-  "Key that we use for a note\'s denote-directory relative path in the hash table")
-
 (defun denote-cache-extra-processing-function-default (file)
   "Default extra processing function.
 This is called with the Denote FILE which is being added to the
@@ -210,8 +207,6 @@ case run `denote-cache-update-cache'"
          (keywords (denote-extract-keywords-from-path file))
          (keywords-sorted (if (null keywords) keywords (denote-keywords-sort keywords)))
          (extension (downcase (file-name-extension file)))
-         (relative-path (file-name-directory (file-relative-name file denote-directory)))
-         (relative-path-without-trailing-slash (when relative-path (substring relative-path 0 -1)))
          (info (make-hash-table :test 'equal))
          (extra (funcall denote-cache-extra-processing-function file)))
     (puthash denote-cache--key-id note-id info)
@@ -220,9 +215,6 @@ case run `denote-cache-update-cache'"
     (puthash denote-cache--key-ctime ctime info)
     (puthash denote-cache--key-keywords keywords-sorted info)
     (puthash denote-cache--key-extension extension info)
-    (when relative-path-without-trailing-slash
-      (puthash denote-cache--key-relative-path relative-path-without-trailing-slash info))
-    
     (when extra
       (dolist (e extra)
         (let* ((key (car e))
@@ -379,15 +371,6 @@ See also `denote-cache-rebuild-cache'"
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-extension (file)
   (gethash denote-cache--key-extension (denote-cache--get-file-info file)))
-
-(defun denote-cache-get-relative-path (file)
-  "Returns relative path of the FILE with respect to
-`denote-directory' For example, if FILE is
-\'/home/user/notes/denote/books/scifi/20210908T123157--prelude-to-foundation__finished_book.org\'
-and `denote-directory' is \'/home/user/notes/denote/\', this
-function will return \'books/scifi\'. If FILE is directly in
-`denote-directory', this will return `nil'"
-  (gethash denote-cache--key-relative-path (denote-cache--get-file-info file)))
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-backlinks (file)
