@@ -223,10 +223,7 @@ case run `denote-cache-update-cache'"
 (defun denote-cache--add-links (file)
   ;; (message (concat "adding links " file))
   ;; (message (concat "links " (prin1-to-string denote-cache--links-cache)))
-  (let* ((backlinks (denote-cache--retrieve-backlinks file))
-         (forwardlinks (denote-cache--retrieve-forwardlinks file)))
-    (dolist (link backlinks)
-      (add-to-list 'denote-cache--links-cache (cons link file)))
+  (let* ((forwardlinks (denote-cache--retrieve-forwardlinks file)))
     (dolist (link forwardlinks)
       (add-to-list 'denote-cache--links-cache (cons file link)))))
 
@@ -379,25 +376,24 @@ function will return \'books/scifi\'. If FILE is directly in
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-backlinks (file)
-  (setq links (cl-remove-if-not
-               (lambda (pair)
-                 (equal (cdr pair) file))
-               denote-cache--links-cache))
+  "Return a list of files that link to FILE."
   (mapcar
-   (lambda (pair)
-     (car pair))
-   links))
+   #'car
+   (cl-remove-if-not
+    (lambda (pair)
+      (equal (cdr pair) file))
+    denote-cache--links-cache)))
 
 ;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-forwardlinks (file)
-  (setq links (cl-remove-if-not
-               (lambda (pair)
-                 (equal (car pair) file))
-               denote-cache--links-cache))
+   "Return a list of files that FILE links to."
   (mapcar
-   (lambda (pair)
-     (cdr pair))
-   links))
+   #'cdr
+   (cl-remove-if-not
+    (lambda (pair)
+      (equal (car pair) file))
+    denote-cache--links-cache)))
+
 
 (defun denote-cache-get-value (file key)
   "Get value for KEY associated with FILE from the cache that was
