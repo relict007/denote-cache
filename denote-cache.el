@@ -128,7 +128,6 @@ Does not use cache."
 
 (defun denote-cache--handle-file-delete (file)
   "Handle event of FILE being deleted"
-  (message (concat "delete " file))
   (when (denote-cache--is-denote-file file)
         (denote-cache--delete-file-from-cache file)
         (denote-cache--run-post-cache-update-hook)))
