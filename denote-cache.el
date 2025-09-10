@@ -117,7 +117,7 @@ Does not use cache."
 Does not use cache."
   ;;TODO this is a temprary hack to speedup indexing
   (when (denote-file-has-supported-extension-p file)
-        (denote-link-return-links file)))
+        (denote-get-links file)))
 
 (defun denote-cache--handle-file-add (file)
   "Handle event of FILE being added."
@@ -273,7 +273,7 @@ case run `denote-cache-update-cache'"
 (add-hook 'after-save-hook #'denote-cache--after-save-hook)
 (add-hook 'org-capture-after-finalize-hook #'denote-cache--org-capture-after-finalize-hook)
 
-(defun denote-cache--performance-all-files-wrapper (&optional files-matching-regexp omit-current text-only)
+(defun denote-cache--performance-all-files-wrapper (&optional files-matching-regexp omit-current text-only exclude-regexp has-identifier)
   denote-cache--performance-hack-all-files)
 
 (defun denote-cache--performance-all-text-files-wrapper ()
