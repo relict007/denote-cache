@@ -101,6 +101,10 @@ files. Don\'t assume that it will only be a txt/org/md etc file.
   "Hook for cache updates")
 
 (defun denote-cache--is-denote-file (file)
+  "Return non-nil if FILE is a Denote file.
+A file qualifies if it is recognized as a Denote note by
+`denote-file-is-note-p', or if it has a Denote identifier and a
+path relative to `denote-directory'."
   (or (denote-file-is-note-p file) (and (denote-file-has-identifier-p file) (denote-get-file-name-relative-to-denote-directory file))))
 
 (defun denote-cache--run-post-cache-update-hook ()
@@ -132,15 +136,17 @@ Does not use cache."
         (denote-cache--delete-file-from-cache file)
         (denote-cache--run-post-cache-update-hook)))
 
-;; FIXME 2023-05-08: Document OLD-FILE NEW-FILE-OR-DIR
 (defun denote-cache--post-rename-file-hook (old-file new-file-or-dir &rest _args)
-  "Hook to run after a file is renamed."
+  "Hook to run after a file is renamed.
+OLD-FILE is the original file path before renaming.
+NEW-FILE-OR-DIR is the new file path or destination directory after renaming."
   (message (concat "post rename " new-file-or-dir))
   (denote-cache--handle-file-add new-file-or-dir))
 
-;; FIXME 2023-05-08: Document OLD-FILE NEW-FILE-OR-DIR
 (defun denote-cache--pre-rename-file-hook (old-file new-file-or-dir &rest _args)
-  "Hook to run before a file is renamed."
+  "Hook to run before a file is renamed.
+OLD-FILE is the original file path that will be renamed.
+NEW-FILE-OR-DIR is the intended new file path or destination directory."
   (message (concat "pre rename " new-file-or-dir))
   (denote-cache--handle-file-delete old-file))
 
@@ -218,25 +224,27 @@ case run `denote-cache-update-cache'"
           (puthash key value info))))
     info))
 
-;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache--add-links (file)
-  ;; (message (concat "adding links " file))
-  ;; (message (concat "links " (prin1-to-string denote-cache--links-cache)))
+  "Add forward links from FILE to `denote-cache--links-cache'.
+Each link is stored as a cons cell (FILE . TARGET) where TARGET is
+a file that FILE links to."
   (let* ((forwardlinks (denote-cache--retrieve-forwardlinks file)))
     (dolist (link forwardlinks)
       (add-to-list 'denote-cache--links-cache (cons file link)))))
 
-;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache--delete-links (file)
-  ;; (message (concat "delete links " file))
+  "Remove all link entries involving FILE from `denote-cache--links-cache'.
+Removes both forward links where FILE is the source and backlinks
+where FILE is the target."
   (setq denote-cache--links-cache
         (cl-delete-if (lambda (pair)
                         (or (equal (car pair) file) (equal (cdr pair) file)))
                       denote-cache--links-cache)))
 
-;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache--update-links (file)
-  ;; (message (concat "update links " file))  
+  "Update link entries for FILE in `denote-cache--links-cache'.
+Deletes existing link entries for FILE and re-adds them by
+re-scanning FILE's forward links."
   (denote-cache--delete-links file)
   (denote-cache--add-links file))
 
@@ -274,9 +282,17 @@ case run `denote-cache-update-cache'"
 (add-hook 'org-capture-after-finalize-hook #'denote-cache--org-capture-after-finalize-hook)
 
 (defun denote-cache--performance-all-files-wrapper (&optional files-matching-regexp omit-current text-only exclude-regexp has-identifier)
+  "Return the pre-fetched list of all Denote files.
+This overrides `denote-directory-files' during cache updates to
+avoid redundant filesystem scans.  Arguments FILES-MATCHING-REGEXP,
+OMIT-CURRENT, TEXT-ONLY, EXCLUDE-REGEXP, and HAS-IDENTIFIER are
+accepted for signature compatibility but ignored."
   denote-cache--performance-hack-all-files)
 
 (defun denote-cache--performance-all-text-files-wrapper ()
+  "Return the pre-fetched list of all Denote text files.
+This overrides `denote-directory-text-only-files' during cache
+updates to avoid redundant filesystem scans."
   denote-cache--performance-hack-all-text-files)
   
 (defun denote-cache-rebuild-cache()
@@ -326,9 +342,10 @@ See also `denote-cache-rebuild-cache'"
   (setq denote-cache--performance-hack-all-files nil)
   (setq denote-cache--performance-hack-all-text-files nil))
 
-;; FIXME 2023-05-08: Add missing doc string.  Document LIST, ANOTHER-LIST.
 (defun denote-cache--util-common-items (list another-list)
-    (cl-intersection list another-list :test #'equal))
+  "Return the items that appear in both LIST and ANOTHER-LIST.
+Comparison is done with `equal'."
+  (cl-intersection list another-list :test #'equal))
 
 (defun denote-cache--utils-remove-matching-items (list items-to-remove)
   "Remove all items from LIST that are also present in ITEMS-TO-REMOVE."
@@ -338,30 +355,34 @@ See also `denote-cache-rebuild-cache'"
   "Get all denote note files."
   (hash-table-keys denote-cache--cache))
 
-;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache--get-file-info (file)
+  "Return the cached info hash table for FILE, or nil if not cached."
   (gethash file denote-cache--cache))
 
 (defun denote-cache-get-id (file)
+  "Return the Denote identifier for FILE from the cache."
   (gethash denote-cache--key-id (denote-cache--get-file-info file)))
 
-;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-title (file)
+  "Return the title of FILE from the cache."
   (gethash denote-cache--key-title (denote-cache--get-file-info file)))
 
-;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-ftime (file)
+  "Return the last modification time of FILE from the cache.
+The value is a Lisp timestamp as returned by `file-attribute-modification-time'."
   (gethash denote-cache--key-ftime (denote-cache--get-file-info file)))
 
 (defun denote-cache-get-ctime (file)
+  "Return the creation time of FILE from the cache.
+The value is a Lisp timestamp obtained via `stat' on Linux."
   (gethash denote-cache--key-ctime (denote-cache--get-file-info file)))
 
-;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-keywords (file)
+  "Return the sorted list of keywords for FILE from the cache."
   (gethash denote-cache--key-keywords (denote-cache--get-file-info file)))
 
-;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-extension (file)
+  "Return the lowercased file extension for FILE from the cache."
   (gethash denote-cache--key-extension (denote-cache--get-file-info file)))
 
 (defun denote-cache-get-relative-path (file)
@@ -373,7 +394,6 @@ function will return \'books/scifi\'. If FILE is directly in
 `denote-directory', this will return `nil'"
   (gethash denote-cache--key-relative-path (denote-cache--get-file-info file)))
 
-;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-backlinks (file)
   "Return a list of files that link to FILE."
   (mapcar
@@ -383,9 +403,8 @@ function will return \'books/scifi\'. If FILE is directly in
       (equal (cdr pair) file))
     denote-cache--links-cache)))
 
-;; FIXME 2023-05-08: Add missing doc string.  Document FILE.
 (defun denote-cache-get-forwardlinks (file)
-   "Return a list of files that FILE links to."
+  "Return a list of files that FILE links to."
   (mapcar
    #'cdr
    (cl-remove-if-not
