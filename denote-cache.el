@@ -102,10 +102,18 @@ files. Don\'t assume that it will only be a txt/org/md etc file.
 
 (defun denote-cache--is-denote-file (file)
   "Return non-nil if FILE is a Denote file.
-A file qualifies if it is recognized as a Denote note by
-`denote-file-is-note-p', or if it has a Denote identifier and a
-path relative to `denote-directory'."
-  (or (denote-file-is-note-p file) (and (denote-file-has-identifier-p file) (denote-get-file-name-relative-to-denote-directory file))))
+A file qualifies if it lives under `denote-directory' (or one of the
+variable `denote-directory' directories) and either is recognized as a
+Denote note by `denote-file-is-note-p', or has a Denote identifier.
+
+The directory check is done explicitly here rather than delegated to
+`denote-file-is-note-p' because, in some Denote versions, that function
+is an obsolete alias for `denote-file-has-denoted-filename-p', which
+only pattern-matches the file name and does not check its location.
+Without this explicit check, any file anywhere on disk whose name
+happens to look like a Denote note would be treated as one."
+  (and (denote-file-is-in-denote-directory-p file)
+       (or (denote-file-is-note-p file) (denote-file-has-identifier-p file))))
 
 (defun denote-cache--run-post-cache-update-hook ()
   "Run the post cache save hooks"
@@ -174,21 +182,17 @@ case run `denote-cache-update-cache'"
   (let ((enabled denote-cache-autosync-mode))
     (cond
      (enabled
+      ;; Only `rename-file' is advised: `dired-rename-file' and
+      ;; `vc-rename-file' both call `rename-file' internally (directly, or
+      ;; via each other), so advising them too would fire these hooks
+      ;; multiple times for a single rename.
       (advice-add #'rename-file :before  #'denote-cache--pre-rename-file-hook)
       (advice-add #'rename-file :after  #'denote-cache--post-rename-file-hook)
-      (advice-add #'vc-rename-file :before  #'denote-cache--pre-rename-file-hook)
-      (advice-add #'vc-rename-file :after  #'denote-cache--post-rename-file-hook)
-      (advice-add #'dired-rename-file :before  #'denote-cache--pre-rename-file-hook)
-      (advice-add #'dired-rename-file :after  #'denote-cache--post-rename-file-hook)
       (advice-add #'delete-file :before #'denote-cache--delete-file-hook)
       (advice-add #'vc-delete-file :before #'denote-cache--delete-file-hook))
      (t
       (advice-remove #'rename-file #'denote-cache--pre-rename-file-hook)
       (advice-remove #'rename-file #'denote-cache--post-rename-file-hook)
-      (advice-remove #'vc-rename-file #'denote-cache--pre-rename-file-hook)
-      (advice-remove #'vc-rename-file #'denote-cache--post-rename-file-hook)
-      (advice-remove #'dired-rename-file #'denote-cache--pre-rename-file-hook)
-      (advice-remove #'dired-rename-file #'denote-cache--post-rename-file-hook)
       (advice-remove #'delete-file #'denote-cache--delete-file-hook)
       (advice-remove #'vc-delete-file #'denote-cache--delete-file-hook)))))
 
